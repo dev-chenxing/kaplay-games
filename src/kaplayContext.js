@@ -1,11 +1,12 @@
 import kaplay from "kaplay";
 export default function createKaplayContext() {
-    return kaplay({
+    const k = kaplay({
         global: false,
         pixelDensity: 2,
         touchToMouse: true,
         debug: true,
-        debugKey: "`",
         canvas: document.getElementById("kaplay"),
     });
+    k.debug.inspect = true;
+    return k;
 }
