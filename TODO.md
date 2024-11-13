@@ -1,3 +1,3 @@
 #
 
-- [ ] draw the player animations spritesheet
+- [ ] draw skybox and grass ground
