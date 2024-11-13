@@ -1,3 +1,3 @@
 #
 
-- [ ] draw skybox and grass ground
+- [ ] add friends
