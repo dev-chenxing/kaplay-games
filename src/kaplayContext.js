@@ -6,6 +6,10 @@ export default function createKaplayContext() {
         touchToMouse: true,
         debug: true,
         canvas: document.getElementById("kaplay"),
+        width: 1280,
+        height: 720,
+        letterbox: true,
+        background: [31, 16, 42],
     });
     k.debug.inspect = true;
     return k;

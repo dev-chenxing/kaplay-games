@@ -1,3 +1,3 @@
 #
 
-- [ ] add friends
+- [ ] on collide with bean
