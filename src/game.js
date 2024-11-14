@@ -36,6 +36,9 @@ export async function init() {
   }
   ground.onDraw(() => sprites.forEach(sprite => k.drawSprite(sprite)));
 
+  // textbox
+  const textbox = k.add([k.opacity(0), k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, k.height() - 100), k.outline(4)]);
+
   // player
   const player = k.add(["player", k.sprite("bag"), k.pos(k.center()), k.anchor("center"), k.area({ shape: new k.Rect(k.vec2(0, 0), 48, 42) }), k.body(), { orientation: k.vec2(0, 0), speed: 200 }]);
 
@@ -72,6 +75,9 @@ export async function init() {
   });
   bean.onStateUpdate("wander", async () => {
     bean.move(bean.orientation.scale(bean.speed));
+  });
+  bean.onCollide("player", () => {
+    textbox.opacity = 1;
   });
 
   // buttons
