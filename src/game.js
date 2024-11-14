@@ -14,7 +14,7 @@ export async function init() {
 
   // draw sky
   const sky_height = 200;
-  const sky = k.add(["sky", k.rect(k.width(), sky_height), k.color(palette.blue), k.outline(4, palette.black), k.pos(k.vec2(0, 0)), k.z(-100), k.area({ cursor: "default" })]);
+  const sky = k.add(["sky", k.rect(k.width(), sky_height), k.color(palette.BLUE), k.outline(4, palette.BLACK), k.pos(k.vec2(0, 0)), k.z(-100), k.area({ cursor: "default" })]);
   const sun = sky.add([k.sprite("sun"), k.anchor("center"), k.pos(k.width() - 90, 50), k.rotate(), k.z(-100)]);
   sun.onUpdate(() => (sun.angle += k.dt() * 12));
   function spawnCloud() {
@@ -25,7 +25,7 @@ export async function init() {
   spawnCloud();
 
   // draw ground
-  const ground = k.add(["ground", k.rect(k.width(), k.height() - sky_height), k.color(palette.light_green), k.outline(4, palette.black), k.pos(k.vec2(0, sky_height)), k.z(-100), k.area({ cursor: "default" })]);
+  const ground = k.add(["ground", k.rect(k.width(), k.height() - sky_height), k.color(palette.LIGHT_GREEN), k.outline(4, palette.BLACK), k.pos(k.vec2(0, sky_height)), k.z(-100), k.area({ cursor: "default" })]);
   const sprites = [];
   for (let i = 0; i < 75; i++) {
     sprites.push({
@@ -40,9 +40,6 @@ export async function init() {
   ground.add([k.rect(1, ground.height + 24), k.pos(ground.width, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
   ground.add([k.rect(ground.width, 1), k.pos(0, ground.height), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
   ground.add([k.rect(1, ground.height + 24), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
-
-  // textbox
-  const textbox = k.add([k.opacity(0), k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, k.height() - 100), k.outline(4), k.z(99)]);
 
   // player
   const player = k.add(["player", k.sprite("bag"), k.pos(k.center()), k.anchor("center"), k.area({ shape: new k.Rect(k.vec2(0, 0), 48, 42) }), k.body(), { orientation: k.vec2(0, 0), speed: 200 }]);
@@ -81,14 +78,67 @@ export async function init() {
   bean.onStateUpdate("wander", async () => {
     bean.move(bean.orientation.scale(bean.speed));
   });
+
+  let currentDialog = 0;
+  const dialogs = [["bean", "[default]Ohhi! I'm just here to say that[/default] [kaplay]KAPLAY[/kaplay] [default]is awesome![/default]"]];
+  // textbox
+  const textbox = k.add([k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, k.height() - 100), k.outline(4), k.z(99)]);
+  textbox.hidden = true;
+  const text = textbox.add([
+    k.text("", {
+      size: 32,
+      width: textbox.width - 230,
+      align: "center",
+      styles: {
+        default: {
+          color: palette.BLACK
+        },
+        kaplay: idx => ({
+          color: k.Color.fromArray(palette.LIGHT_GREEN),
+          pos: k.vec2(0, k.wave(-4, 4, k.time() * 4 + idx * 0.5)),
+          scale: k.wave(1, 1.2, k.time() * 3 + idx),
+          angle: k.wave(-9, 9, k.time() * 3 + idx)
+        })
+      },
+      transform: idx => {
+        return {
+          opacity: idx < text.letterCount ? 1 : 0
+        };
+      }
+    }),
+    k.pos(0),
+    k.anchor("center"),
+    {
+      letterCount: 0
+    }
+  ]);
+  function startWriting(dialog) {
+    text.letterCount = 0;
+    text.text = dialog;
+
+    const writing = k.loop(0.1, () => {
+      text.letterCount = Math.min(text.letterCount + 1, text.renderedText.length);
+
+      if (text.letterCount === text.renderedText.length) {
+        writing.cancel();
+      }
+    });
+  }
+  // Update the on screen sprite & text
+  function updateDialog() {
+    const [char, dialog] = dialogs[currentDialog];
+    startWriting(dialog, char);
+  }
+
   bean.onCollide("player", () => {
-    textbox.opacity = 1;
+    updateDialog();
+    textbox.hidden = false;
   });
 
   // buttons
   function addButton(parent = k, text = "button", position = k.vec2(200, 100), callback = () => k.debug.log("button clicked")) {
     const btn = parent.add([k.rect(240, 80, { radius: 8 }), k.pos(position), k.area({ cursor: "pointer" }), k.scale(1), k.anchor("center"), k.outline(4)]);
-    btn.add([k.text(text), k.anchor("center"), k.color(palette.black)]);
+    btn.add([k.text(text), k.anchor("center"), k.color(palette.BLACK)]);
     btn.onHoverUpdate(() => {
       const t = k.time() * 10;
       btn.color = k.hsl2rgb((t / 10) % 1, 0.6, 0.7);

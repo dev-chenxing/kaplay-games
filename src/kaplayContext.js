@@ -9,7 +9,7 @@ export default function createKaplayContext() {
     font: "happy",
     pixelDensity: 2,
     canvas: document.getElementById("kaplay"),
-    background: palette.black,
+    background: palette.BLACK,
     touchToMouse: true,
     global: false
   });
