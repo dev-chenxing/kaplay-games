@@ -1,3 +1,4 @@
 #
 
-- [ ] on collide with bean
+- [ ] bean cannot run off the screen
+- [ ] implement button callback
