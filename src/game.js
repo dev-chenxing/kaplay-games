@@ -10,11 +10,13 @@ export async function init() {
     k.loadSprite("sun", "./sprites/sun.png");
     k.loadSprite("cloud", "./sprites/cloud.png");
     k.loadSprite("bean", "./sprites/bean.png");
+    k.loadSprite("grass", "./sprites/grass.png");
+    k.loadSprite("dirt", "./sprites/dirt.png");
     k.loadBitmapFont("happy", "./fonts/happy_28x36.png", 28, 36);
 
     // draw sky
     const skyHeight = 300;
-    const sky = k.add(["sky", k.rect(k.width(), skyHeight), k.color(palette.BLUE), k.outline(4, palette.BLACK), k.pos(k.vec2(0, 0)), k.z(-100), k.area({ cursor: "default" })]);
+    const sky = k.add(["sky", k.rect(k.width(), k.height()), k.color(palette.BLUE), k.pos(0), k.z(-100), k.area({ cursor: "default" }, k.fixed())]);
     const sun = sky.add([k.sprite("sun"), k.anchor("center"), k.pos(k.width() - 90, 50), k.rotate(), k.z(-100)]);
     sun.onUpdate(() => (sun.angle += k.dt() * 12));
     function spawnCloud() {
@@ -24,28 +26,42 @@ export async function init() {
     }
     spawnCloud();
 
-    // draw ground
-    const ground = k.add(["ground", k.rect(k.width(), k.height() - skyHeight), k.color(palette.LIGHT_GREEN), k.outline(4, palette.BLACK), k.pos(k.vec2(0, skyHeight)), k.z(-100), k.area({ cursor: "default" })]);
-    const sprites = [];
-    for (let i = 0; i < 75; i++) {
-        sprites.push({
-            sprite: "spike_grass",
-            pos: k.vec2(k.rand(0, k.width()), k.rand(0, k.height())),
-            anchor: "center",
-        });
-    }
-    ground.onDraw(() => sprites.forEach((sprite) => k.drawSprite(sprite)));
-    // bounding box
-    ground.add(["bounding_box_top", k.rect(ground.width, 1), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
-    ground.add([k.rect(1, ground.height + 24), k.pos(ground.width, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
-    ground.add([k.rect(ground.width, 1), k.pos(0, ground.height), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
-    ground.add([k.rect(1, ground.height + 24), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
+    // draw levels
+    k.setGravity(2400);
+    k.addLevel(
+        [
+            // Design the level layout with symbols
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "====================",
+            "--------------------",
+        ],
+        {
+            // The size of each grid
+            tileWidth: 64,
+            tileHeight: 64,
+            // The position of the top left block
+            pos: k.vec2(0),
+            // Define what each symbol means (in components)
+            tiles: {
+                "=": () => [k.sprite("grass"), k.area(), k.body({ isStatic: true })],
+                "-": () => [k.sprite("dirt")],
+            },
+        }
+    );
 
     // player
-    const player = k.add(["player", k.sprite("bag"), k.pos(k.center()), k.anchor("center"), k.area({ shape: new k.Rect(k.vec2(0, 0), 72, 42) }), k.body({ jumpForce: 12 }), { orientation: k.vec2(0, 0), speed: 200, isTalking: false }]);
-    player.collisionIgnore.push("bounding_box_top");
+    const player = k.add(["player", k.sprite("bean"), k.pos(k.center()), k.anchor("bot"), k.area(), k.body({ jumpForce: 800 }), { orientation: k.vec2(0, 0), speed: 200, isTalking: false }]);
 
-    // player movements
+    // // player movements
     player.onUpdate(() => {
         player.orientation = player.orientation.unit();
         if (!player.isTalking) {
@@ -53,47 +69,36 @@ export async function init() {
             else if (player.orientation.x == 1) player.flipX = false;
             player.move(player.orientation.scale(player.speed));
         }
-        if (player.isColliding(sky)) {
-            k.setGravity(3000);
-        }
-        if (player.isColliding(ground)) {
-            k.setGravity(0);
-            player.vel.y = 0;
-        }
     });
     k.onKeyDown("left", () => (player.orientation.x = -1));
     k.onKeyDown("right", () => (player.orientation.x = 1));
-    k.onKeyDown("up", () => (player.orientation.y = -1));
-    k.onKeyDown("down", () => (player.orientation.y = 1));
     k.onKeyRelease("left", () => (player.orientation.x = 0));
     k.onKeyRelease("right", () => (player.orientation.x = 0));
-    k.onKeyRelease("up", () => (player.orientation.y = 0));
-    k.onKeyRelease("down", () => (player.orientation.y = 0));
-    k.onKeyDown("e", () => {
-        if (player.isColliding(sky)) {
-            if (!player.isJumping() && !player.isFalling()) player.jump();
+    k.onKeyPress("space", () => {
+        if (player.isGrounded()) {
+            player.jump();
         }
     });
 
     // npcs
-    const bean = ground.add(["bean", k.sprite("bean"), k.pos(410, 190), k.area(), k.body(), k.state("idle", ["idle", "wander"]), { orientation: k.vec2(0, 0), speed: 50, isTalking: false }]);
-    bean.onStateEnter("idle", async () => {
+    const bag = k.add(["bag", k.sprite("bag"), k.pos(400, 600), k.area(), k.body(), k.state("idle", ["idle", "wander"]), { orientation: k.vec2(0, 0), speed: 50, isTalking: false }]);
+    bag.onStateEnter("idle", async () => {
         await k.wait(5);
-        bean.enterState("wander");
+        bag.enterState("wander");
     });
-    bean.onStateEnter("wander", async () => {
-        bean.orientation = k.vec2(k.rand(-1, 1), k.rand(-1, 1)).unit();
-        await k.wait(10);
-        bean.enterState("idle");
+    bag.onStateEnter("wander", async () => {
+        bag.orientation = k.vec2(k.rand(-1, 1), 0).unit();
+        await k.wait(5);
+        bag.enterState("idle");
     });
-    bean.onStateUpdate("wander", async () => {
-        if (!bean.isTalking) bean.move(bean.orientation.scale(bean.speed));
+    bag.onStateUpdate("wander", async () => {
+        if (!bag.isTalking) bag.move(bag.orientation.scale(bag.speed));
     });
 
     let currentDialog = 0;
     const dialogs = [["[default]Ohhi! I'm just here to say that[/default] [kaplay]KAPLAY[/kaplay] [default]is awesome![/default]"]];
     // textbox
-    const textbox = k.add([k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, k.height() - 100), k.outline(4), k.z(99), { target: null }]);
+    const textbox = k.add([k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, 500), k.outline(4), k.z(99), { target: null }]);
     textbox.hidden = true;
     const text = textbox.add([
         k.text("Hello World", {
@@ -155,8 +160,8 @@ export async function init() {
 
     k.onKeyDown("space", () => deactivateDialog());
 
-    bean.onCollide("player", () => {
-        activateDialog(bean);
+    bag.onCollide("player", () => {
+        activateDialog(bag);
     });
 
     // buttons
