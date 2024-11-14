@@ -14,7 +14,7 @@ export async function init() {
 
   // draw sky
   const sky_height = 200;
-  const sky = k.add(["sky", k.rect(k.width(), sky_height), k.color(palette.blue), k.outline(4, palette.black), k.pos(k.vec2(0, 0)), k.z(-100), k.area(), k.body({ isStatic: true })]);
+  const sky = k.add(["sky", k.rect(k.width(), sky_height), k.color(palette.blue), k.outline(4, palette.black), k.pos(k.vec2(0, 0)), k.z(-100), k.area({ cursor: "default" })]);
   const sun = sky.add([k.sprite("sun"), k.anchor("center"), k.pos(k.width() - 90, 50), k.rotate(), k.z(-100)]);
   sun.onUpdate(() => (sun.angle += k.dt() * 12));
   function spawnCloud() {
@@ -25,7 +25,7 @@ export async function init() {
   spawnCloud();
 
   // draw ground
-  const ground = k.add(["ground", k.rect(k.width(), k.height() - sky_height), k.color(palette.light_green), k.outline(4, palette.black), k.pos(k.vec2(0, sky_height)), k.z(-100), k.area()]);
+  const ground = k.add(["ground", k.rect(k.width(), k.height() - sky_height), k.color(palette.light_green), k.outline(4, palette.black), k.pos(k.vec2(0, sky_height)), k.z(-100), k.area({ cursor: "default" })]);
   const sprites = [];
   for (let i = 0; i < 75; i++) {
     sprites.push({
@@ -35,9 +35,14 @@ export async function init() {
     });
   }
   ground.onDraw(() => sprites.forEach(sprite => k.drawSprite(sprite)));
+  // bounding box
+  ground.add([k.rect(ground.width, 1), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
+  ground.add([k.rect(1, ground.height + 24), k.pos(ground.width, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
+  ground.add([k.rect(ground.width, 1), k.pos(0, ground.height), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
+  ground.add([k.rect(1, ground.height + 24), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
 
   // textbox
-  const textbox = k.add([k.opacity(0), k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, k.height() - 100), k.outline(4)]);
+  const textbox = k.add([k.opacity(0), k.rect(k.width() - 140, 140, { radius: 4 }), k.anchor("center"), k.pos(k.center().x, k.height() - 100), k.outline(4), k.z(99)]);
 
   // player
   const player = k.add(["player", k.sprite("bag"), k.pos(k.center()), k.anchor("center"), k.area({ shape: new k.Rect(k.vec2(0, 0), 48, 42) }), k.body(), { orientation: k.vec2(0, 0), speed: 200 }]);
@@ -70,7 +75,7 @@ export async function init() {
   });
   bean.onStateEnter("wander", async () => {
     bean.orientation = k.vec2(k.rand(-1, 1), k.rand(-1, 1)).unit();
-    await k.wait(2);
+    await k.wait(10);
     bean.enterState("idle");
   });
   bean.onStateUpdate("wander", async () => {
@@ -81,15 +86,13 @@ export async function init() {
   });
 
   // buttons
-  k.onUpdate(() => k.setCursor("default"));
   function addButton(parent = k, text = "button", position = k.vec2(200, 100), callback = () => k.debug.log("button clicked")) {
-    const btn = parent.add([k.rect(240, 80, { radius: 8 }), k.pos(position), k.area(), k.scale(1), k.anchor("center"), k.outline(4)]);
+    const btn = parent.add([k.rect(240, 80, { radius: 8 }), k.pos(position), k.area({ cursor: "pointer" }), k.scale(1), k.anchor("center"), k.outline(4)]);
     btn.add([k.text(text), k.anchor("center"), k.color(palette.black)]);
     btn.onHoverUpdate(() => {
       const t = k.time() * 10;
       btn.color = k.hsl2rgb((t / 10) % 1, 0.6, 0.7);
       btn.scale = k.vec2(1.2);
-      k.setCursor("pointer");
     });
     btn.onHoverEnd(() => {
       btn.scale = k.vec2(1);
