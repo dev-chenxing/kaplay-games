@@ -13,7 +13,7 @@ export async function init() {
   k.loadBitmapFont("happy", "./fonts/happy_28x36.png", 28, 36);
 
   // draw sky
-  const skyHeight = 200;
+  const skyHeight = 300;
   const sky = k.add(["sky", k.rect(k.width(), skyHeight), k.color(palette.BLUE), k.outline(4, palette.BLACK), k.pos(k.vec2(0, 0)), k.z(-100), k.area({ cursor: "default" })]);
   const sun = sky.add([k.sprite("sun"), k.anchor("center"), k.pos(k.width() - 90, 50), k.rotate(), k.z(-100)]);
   sun.onUpdate(() => (sun.angle += k.dt() * 12));
@@ -36,13 +36,14 @@ export async function init() {
   }
   ground.onDraw(() => sprites.forEach(sprite => k.drawSprite(sprite)));
   // bounding box
-  ground.add([k.rect(ground.width, 1), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
+  ground.add(["bounding_box_top", k.rect(ground.width, 1), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
   ground.add([k.rect(1, ground.height + 24), k.pos(ground.width, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
   ground.add([k.rect(ground.width, 1), k.pos(0, ground.height), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
   ground.add([k.rect(1, ground.height + 24), k.pos(0, -24), k.area(), k.body({ isStatic: true }), k.opacity(0)]);
 
   // player
-  const player = k.add(["player", k.sprite("bag"), k.pos(k.center()), k.anchor("center"), k.area({ shape: new k.Rect(k.vec2(0, 0), 72, 42) }), k.body(), { orientation: k.vec2(0, 0), speed: 200, isTalking: false }]);
+  const player = k.add(["player", k.sprite("bag"), k.pos(k.center()), k.anchor("center"), k.area({ shape: new k.Rect(k.vec2(0, 0), 72, 42) }), k.body({ jumpForce: 12 }), { orientation: k.vec2(0, 0), speed: 200, isTalking: false }]);
+  player.collisionIgnore.push("bounding_box_top");
 
   // player movements
   player.onUpdate(() => {
@@ -51,6 +52,13 @@ export async function init() {
       if (player.orientation.x == -1) player.flipX = true;
       else if (player.orientation.x == 1) player.flipX = false;
       player.move(player.orientation.scale(player.speed));
+    }
+    if (player.isColliding(sky)) {
+      k.setGravity(3000);
+    }
+    if (player.isColliding(ground)) {
+      k.setGravity(0);
+      player.vel.y = 0;
     }
   });
   k.onKeyDown("left", () => (player.orientation.x = -1));
@@ -61,6 +69,11 @@ export async function init() {
   k.onKeyRelease("right", () => (player.orientation.x = 0));
   k.onKeyRelease("up", () => (player.orientation.y = 0));
   k.onKeyRelease("down", () => (player.orientation.y = 0));
+  k.onKeyDown("e", () => {
+    if (player.isColliding(sky)) {
+      player.jump();
+    }
+  });
 
   // npcs
   const bean = ground.add(["bean", k.sprite("bean"), k.pos(410, 190), k.area(), k.body(), k.state("idle", ["idle", "wander"]), { orientation: k.vec2(0, 0), speed: 50, isTalking: false }]);

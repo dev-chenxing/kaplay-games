@@ -1,4 +1,4 @@
 #
 
-- [ ] closing dialog on button pressed space
+- [ ] prevent dialog from constant reopening after deactivate
 - [ ] implement button callback
