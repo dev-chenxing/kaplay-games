@@ -1,5 +1,5 @@
 #
 
-- [ ] prevent dialog from constant reopening after deactivate
+- [ ] cannot walk away bag
 - [ ] bag walking animations
 - [ ] implement button callback
